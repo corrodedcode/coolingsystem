@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>冷却系统3D可视化</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    
+    main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+    
+    aside {
+      width: 300px;
+      background-color: #f8f9fa;
+      padding: 20px;
+      overflow-y: auto;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    }
+    
+    section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    #scene-container {
+      flex: 1;
+      background-color: #f0f0f0;
+      position: relative;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    input {
+      padding: 8px;
+      width: calc(100% - 18px);
+      margin-top: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 10px;
+      width: 100%;
+    }
+    
+    button:hover {
+      background-color: #2980b9;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 1000;
+    }
+
+    .modal-content {
+      position: relative;
+      background-color: #fff;
+      margin: 50px auto;
+      padding: 20px;
+      width: 80%;
+      max-width: 600px;
+      border-radius: 8px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .close-btn {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      font-size: 24px;
+      cursor: pointer;
+      color: #666;
+    }
+
+    .table-container {
+      margin-top: 20px;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+
+    th, td {
+      padding: 8px;
+      text-align: left;
+      border: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #f5f5f5;
+    }
+
+    .data-table {
+      margin-bottom: 20px;
+    }
+
+    .data-table h3 {
+      margin-bottom: 10px;
+      color: #2c3e50;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <aside>
+      <h3>冷却器系统配置</h3>
+      <div class="data-table">
+        <h3>冷却器列表</h3>
+        <div id="coolers-table"></div>
+        <button type="button" id="add-cooler-btn">添加冷却器</button>
+      </div>
+      
+      <div class="data-table">
+        <h3>冷却水流股列表</h3>
+        <div id="flows-table"></div>
+        <button type="button" id="add-flow-btn">添加水流股</button>
+      </div>
+      
+      <button type="button" id="generate-btn">生成三维视图</button>
+    </aside>
+    
+    <section>
+      <div id="scene-container"></div>
+    </section>
+  </main>
+
+  <!-- 冷却器编辑弹窗 -->
+  <div id="cooler-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn">&times;</span>
+      <h3>编辑冷却器</h3>
+      <form id="cooler-form">
+        <div class="form-group">
+          <label>名称: <input type="text" name="name" required></label>
+        </div>
+        <div class="form-group">
+          <label>X坐标: <input type="number" name="x" step="1" required></label>
+        </div>
+        <div class="form-group">
+          <label>Y坐标: <input type="number" name="y" step="1" required></label>
+        </div>
+        <div class="form-group">
+          <label>Z坐标: <input type="number" name="z" step="1" required></label>
+        </div>
+        <div class="form-group">
+          <label>入口温度: <input type="number" name="inTemp" step="0.1" required></label>
+        </div>
+        <div class="form-group">
+          <label>出口温度: <input type="number" name="outTemp" step="0.1" required></label>
+        </div>
+        <button type="submit">保存</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 水流股编辑弹窗 -->
+  <div id="flow-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn">&times;</span>
+      <h3>编辑水流股</h3>
+      <form id="flow-form">
+        <div class="form-group">
+          <label>名称: <input type="text" name="name" required></label>
+        </div>
+        <div class="form-group">
+          <label>源头冷却器: <input type="text" name="source" required></label>
+        </div>
+        <div class="form-group">
+          <label>途径冷却器: <input type="text" name="path" placeholder="用逗号分隔"></label>
+        </div>
+        <div class="form-group">
+          <label>终端冷却器: <input type="text" name="destinations" required></label>
+        </div>
+        <button type="submit">保存</button>
+      </form>
+    </div>
+  </div>
+  
+  <script src="./renderer.js"></script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+{
+  "coolers": [
+    {
+      "name": "冷却器1",
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "inTemp": 55,
+      "outTemp": 37.5
+    },
+    {
+      "name": "冷却器2",
+      "x": 3,
+      "y": 0,
+      "z": 0,
+      "inTemp": 37.5,
+      "outTemp": 28.6
+    },
+    {
+      "name": "冷却器3",
+      "x": 0,
+      "y": 3,
+      "z": 0,
+      "inTemp": 28.6,
+      "outTemp": 20
+    },
+    {
+      "name": "冷却器4",
+      "x": 3,
+      "y": 3,
+      "z": 0,
+      "inTemp": 20,
+      "outTemp": 55
+    }
+  ],
+  "flows": [
+    {
+      "name": "水流1",
+      "source": "冷却器1",
+      "path": ["冷却器2"],
+      "destinations": "冷却器3"
+    },
+    {
+      "name": "水流2",
+      "source": "冷却器3",
+      "path": [],
+      "destinations": "冷却器4"
+    },
+    {
+      "name": "水流3",
+      "source": "冷却器4",
+      "path": [],
+      "destinations": "冷却器1"
+    }
+  ]
+}
