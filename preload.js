@@ -1,4 +1,5 @@
 const { contextBridge, ipcRenderer } = require('electron');
+const { spawn } = require('child_process');
 const path = require('path');
 
 console.log('Preload script starting...');
@@ -37,6 +38,7 @@ Promise.all([
             // 冷却器相关方法
             addCooler: (...args) => instance.addCooler(...args),
             addFlow: (...args) => instance.addFlow(...args),
+            addHotFlow: (...args) => instance.addHotFlow(...args),
             
             // 表单相关方法
             addCoolerInputs: (...args) => instance.addCoolerInputs(...args),
@@ -72,6 +74,59 @@ Promise.all([
   // 触发一个自定义事件表明 API 已经准备就绪
   document.dispatchEvent(new CustomEvent('apiReady'));
   console.log('apiReady event dispatched');
+
+  // 调用Python脚本进行计算
+  async function calculateWithPython(data) {
+    return new Promise((resolve, reject) => {
+      const pythonScript = path.join(__dirname, 'python', 'calculate.py');
+      const pythonProcess = spawn('python', [pythonScript]);
+      
+      let result = '';
+      let error = '';
+
+      // 发送数据到Python脚本
+      pythonProcess.stdin.write(JSON.stringify(data));
+      pythonProcess.stdin.end();
+
+      // 接收Python脚本的输出
+      pythonProcess.stdout.on('data', (data) => {
+        result += data.toString();
+      });
+
+      // 接收Python脚本的错误输出
+      pythonProcess.stderr.on('data', (data) => {
+        error += data.toString();
+      });
+
+      // 处理脚本执行完成
+      pythonProcess.on('close', (code) => {
+        if (code !== 0) {
+          reject(new Error(`Python脚本执行失败: ${error}`));
+        } else {
+          try {
+            const calculatedData = JSON.parse(result);
+            resolve(calculatedData);
+          } catch (e) {
+            reject(new Error(`解析Python输出失败: ${e.message}`));
+          }
+        }
+      });
+    });
+  }
+
+  // 暴露给渲染进程的API
+  contextBridge.exposeInMainWorld('electronAPI', {
+    // 添加新的计算API
+    calculateData: async (data) => {
+      try {
+        const results = await calculateWithPython(data);
+        return results;
+      } catch (error) {
+        console.error('计算错误:', error);
+        throw error;
+      }
+    }
+  });
 }).catch(error => {
   console.error('Error in module loading process:', error);
 });

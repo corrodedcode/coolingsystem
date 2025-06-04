@@ -461,7 +461,7 @@ document.addEventListener('apiReady', () => {
         // 添加所有热流股
         console.log('Adding hot flows:', this.hotFlows);
         this.hotFlows.forEach(flow => {
-          this.model3D.addHotFlow(flow);
+          this.model3D.addHotFlow(flow);  // 添加热流股到3D视图
         });
         
         // 渲染场景
@@ -475,3 +475,83 @@ document.addEventListener('apiReady', () => {
   // 创建应用实例并挂载到window对象以便访问
   window.app = new CoolingSystemApp();
 });
+
+// 在加载数据后调用Python计算
+async function loadAndCalculateData() {
+  try {
+    const response = await fetch('sample-data.json');
+    const data = await response.json();
+    
+    // 调用Python进行计算
+    const calculatedResults = await window.electronAPI.calculateData(data);
+    
+    // 更新界面显示计算结果
+    updateVisualization(data, calculatedResults);
+    
+    return data;
+  } catch (error) {
+    console.error('加载或计算数据时出错:', error);
+    throw error;
+  }
+}
+
+function updateVisualization(data, calculatedResults) {
+  // 更新热流股显示
+  data.hotFlows.forEach(hotFlow => {
+    const results = calculatedResults.hotFlows[hotFlow.name];
+    if (results) {
+      // 添加计算结果到热流股数据中
+      hotFlow.heatExchange = results.heatExchange;
+      hotFlow.efficiencies = results.efficiencies;
+    }
+  });
+
+  // 更新冷却器显示
+  data.coolers.forEach(cooler => {
+    const results = calculatedResults.coolers[cooler.name];
+    if (results) {
+      // 添加计算结果到冷却器数据中
+      cooler.totalHeatLoad = results.totalHeatLoad;
+      cooler.waterFlowRate = results.waterFlowRate;
+    }
+  });
+
+  // 更新3D可视化
+  if (coolingSystem) {
+    coolingSystem.clearScene();
+    
+    // 添加冷却器
+    data.coolers.forEach(cooler => {
+      coolingSystem.addCooler(cooler);
+    });
+
+    // 添加流股
+    data.flows.forEach(flow => {
+      coolingSystem.addFlow(flow);
+    });
+
+    // 添加热流股
+    data.hotFlows.forEach(hotFlow => {
+      coolingSystem.addHotFlow(hotFlow);  // 添加热流股到3D视图
+    });
+  }
+}
+
+// 修改初始化函数
+async function init() {
+  try {
+    // 等待API就绪
+    await waitForAPI();
+    
+    // 创建3D系统实例
+    const container = document.getElementById('3d-container');
+    coolingSystem = new CoolingSystem3D(container);
+    
+    // 加载并计算数据
+    const data = await loadAndCalculateData();
+    
+    // 设置事件监听器等其他初始化操作...
+  } catch (error) {
+    console.error('初始化失败:', error);
+  }
+}
