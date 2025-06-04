@@ -20,12 +20,38 @@
       overflow: hidden;
     }
     
-    aside {
-      width: 300px;
-      background-color: #f8f9fa;
+    .sidebar {
+      width: 200px;
+      background-color: #2c3e50;
       padding: 20px;
-      overflow-y: auto;
-      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .sidebar button {
+      background-color: #34495e;
+      color: white;
+      border: none;
+      padding: 12px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 0;
+      text-align: left;
+      transition: background-color 0.2s;
+    }
+    
+    .sidebar button:hover {
+      background-color: #3498db;
+    }
+    
+    .sidebar button.disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .sidebar button.disabled:hover {
+      background-color: #34495e;
     }
     
     section {
@@ -40,6 +66,12 @@
       position: relative;
     }
     
+    .menu-bar {
+      background-color: #f8f9fa;
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+    
     .form-group {
       margin-bottom: 15px;
     }
@@ -52,21 +84,6 @@
       border-radius: 4px;
     }
     
-    button {
-      background-color: #3498db;
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      margin-top: 10px;
-      width: 100%;
-    }
-    
-    button:hover {
-      background-color: #2980b9;
-    }
-
     .modal {
       display: none;
       position: fixed;
@@ -120,39 +137,84 @@
       background-color: #f5f5f5;
     }
 
-    .data-table {
-      margin-bottom: 20px;
+    .list-select-modal .modal-content {
+      max-width: 400px;
     }
 
-    .data-table h3 {
-      margin-bottom: 10px;
-      color: #2c3e50;
+    .list-option {
+      display: block;
+      width: 100%;
+      padding: 15px;
+      margin: 10px 0;
+      text-align: left;
+      background-color: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .list-option:hover {
+      background-color: #e9ecef;
     }
   </style>
 </head>
 <body>
+  <div class="menu-bar">
+    <button id="edit-btn">Edit</button>
+  </div>
+  
   <main>
-    <aside>
-      <h3>冷却器系统配置</h3>
-      <div class="data-table">
-        <h3>冷却器列表</h3>
-        <div id="coolers-table"></div>
-        <button type="button" id="add-cooler-btn">添加冷却器</button>
-      </div>
-      
-      <div class="data-table">
-        <h3>冷却水流股列表</h3>
-        <div id="flows-table"></div>
-        <button type="button" id="add-flow-btn">添加水流股</button>
-      </div>
-      
-      <button type="button" id="generate-btn">生成三维视图</button>
-    </aside>
-    
+    <div class="sidebar">
+      <button id="generate-btn">生成三维视图</button>
+      <button id="generate-network-btn" class="disabled" title="功能开发中">生成换热网络</button>
+      <button id="calculate-network-btn" class="disabled" title="功能开发中">计算网络</button>
+      <button id="optimize-network-btn" class="disabled" title="功能开发中">优化网络</button>
+    </div>
     <section>
       <div id="scene-container"></div>
     </section>
   </main>
+
+  <!-- 列表选择弹窗 -->
+  <div id="list-select-modal" class="modal list-select-modal">
+    <div class="modal-content">
+      <span class="close-btn">&times;</span>
+      <h3>选择要编辑的列表</h3>
+      <button class="list-option" id="edit-coolers-btn">冷却器列表</button>
+      <button class="list-option" id="edit-flows-btn">冷却水流股列表</button>
+      <button class="list-option" id="edit-hot-flows-btn">热流股列表</button>
+    </div>
+  </div>
+
+  <!-- 冷却器列表弹窗 -->
+  <div id="coolers-list-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn">&times;</span>
+      <h3>冷却器列表</h3>
+      <div id="coolers-table"></div>
+      <button type="button" id="add-cooler-btn">添加冷却器</button>
+    </div>
+  </div>
+
+  <!-- 水流股列表弹窗 -->
+  <div id="flows-list-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn">&times;</span>
+      <h3>冷却水流股列表</h3>
+      <div id="flows-table"></div>
+      <button type="button" id="add-flow-btn">添加水流股</button>
+    </div>
+  </div>
+
+  <!-- 热流股列表弹窗 -->
+  <div id="hot-flows-list-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn">&times;</span>
+      <h3>热流股列表</h3>
+      <div id="hot-flows-table"></div>
+      <button type="button" id="add-hot-flow-btn">添加热流股</button>
+    </div>
+  </div>
 
   <!-- 冷却器编辑弹窗 -->
   <div id="cooler-modal" class="modal">
@@ -193,13 +255,49 @@
           <label>名称: <input type="text" name="name" required></label>
         </div>
         <div class="form-group">
-          <label>源头冷却器: <input type="text" name="source" required></label>
+          <label>源头冷却器: <input type="text" name="sources" placeholder="多个冷却器用逗号分隔" required></label>
+          <small class="help-text">多个源头冷却器的出水将在进入第一个途径冷却器前汇合</small>
         </div>
         <div class="form-group">
-          <label>途径冷却器: <input type="text" name="path" placeholder="用逗号分隔"></label>
+          <label>途径冷却器: <input type="text" name="path" placeholder="多个冷却器用逗号分隔，将按顺序连接"></label>
+          <small class="help-text">水流将按照输入顺序依次流经这些冷却器</small>
         </div>
         <div class="form-group">
-          <label>终端冷却器: <input type="text" name="destinations" required></label>
+          <label>终端冷却器: <input type="text" name="destinations" placeholder="多个冷却器用逗号分隔" required></label>
+          <small class="help-text">水流将在最后一个途径冷却器之后分流至这些终端冷却器</small>
+        </div>
+        <button type="submit">保存</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 热流股编辑弹窗 -->
+  <div id="hot-flow-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn">&times;</span>
+      <h3>编辑热流股</h3>
+      <form id="hot-flow-form">
+        <div class="form-group">
+          <label>名称: <input type="text" name="name" required></label>
+        </div>
+        <div class="form-group">
+          <label>入口温度 (℃): <input type="number" name="inletTemp" step="0.1" required></label>
+        </div>
+        <div class="form-group">
+          <label>出口温度 (℃): <input type="number" name="outletTemp" step="0.1" required></label>
+        </div>
+        <div class="form-group">
+          <label>MCP (kJ/℃·h): <input type="number" name="mcp" step="0.1" required></label>
+        </div>
+        <div class="form-group">
+          <label>热容量 (kW): <input type="number" name="heatCapacity" step="0.1" required></label>
+        </div>
+        <div class="form-group">
+          <label>流速 (kg/h): <input type="number" name="flowRate" step="0.1" required></label>
+        </div>
+        <div class="form-group">
+          <label>降温冷却器: <input type="text" name="coolers" placeholder="多个冷却器用逗号分隔" required></label>
+          <small class="help-text">热流股将依次通过这些冷却器进行降温</small>
         </div>
         <button type="submit">保存</button>
       </form>

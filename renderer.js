@@ -12,6 +12,7 @@ document.addEventListener('apiReady', () => {
     constructor() {
       this.coolers = [];
       this.flows = [];
+      this.hotFlows = [];
       this.model3D = null;
       this.initializeComponents();
       this.loadSampleData();
@@ -48,40 +49,127 @@ document.addEventListener('apiReady', () => {
         const data = await response.json();
         this.coolers = data.coolers || [];
         this.flows = data.flows || [];
+        this.hotFlows = data.hotFlows || [];  // 加载热流股数据
         
         this.updateCoolersTable();
         this.updateFlowsTable();
+        this.updateHotFlowsTable();  // 更新热流股表格
       } catch (error) {
         console.error('加载示例数据失败:', error);
       }
     }
 
     setupEventListeners() {
+      // Edit按钮事件
+      document.getElementById('edit-btn').addEventListener('click', () => {
+        document.getElementById('list-select-modal').style.display = 'block';
+      });
+
+      // 列表选择事件
+      document.getElementById('edit-coolers-btn').addEventListener('click', () => {
+        document.getElementById('list-select-modal').style.display = 'none';
+        document.getElementById('coolers-list-modal').style.display = 'block';
+      });
+
+      document.getElementById('edit-flows-btn').addEventListener('click', () => {
+        document.getElementById('list-select-modal').style.display = 'none';
+        document.getElementById('flows-list-modal').style.display = 'block';
+      });
+
+      document.getElementById('edit-hot-flows-btn').addEventListener('click', () => {
+        document.getElementById('list-select-modal').style.display = 'none';
+        document.getElementById('hot-flows-list-modal').style.display = 'block';
+      });
+
       // 冷却器相关事件
-      document.getElementById('add-cooler-btn').addEventListener('click', () => this.showCoolerModal());
+      document.getElementById('add-cooler-btn').addEventListener('click', () => {
+        document.getElementById('coolers-list-modal').style.display = 'none';
+        this.showCoolerModal();
+      });
       document.getElementById('cooler-form').addEventListener('submit', (e) => this.handleCoolerSubmit(e));
       
       // 水流股相关事件
-      document.getElementById('add-flow-btn').addEventListener('click', () => this.showFlowModal());
+      document.getElementById('add-flow-btn').addEventListener('click', () => {
+        document.getElementById('flows-list-modal').style.display = 'none';
+        this.showFlowModal();
+      });
       document.getElementById('flow-form').addEventListener('submit', (e) => this.handleFlowSubmit(e));
       
-      // 生成3D视图
+      // 热流股相关事件
+      document.getElementById('add-hot-flow-btn').addEventListener('click', () => {
+        document.getElementById('hot-flows-list-modal').style.display = 'none';
+        this.showHotFlowModal();
+      });
+      document.getElementById('hot-flow-form').addEventListener('submit', (e) => this.handleHotFlowSubmit(e));
+      
+      // 功能按钮事件
       document.getElementById('generate-btn').addEventListener('click', () => {
         console.log('Generating 3D view...');
         this.generate3DView();
+      });
+
+      // 预留的功能按钮事件
+      document.getElementById('generate-network-btn').addEventListener('click', () => {
+        if (!this.isFeatureAvailable('generate-network')) return;
+        this.generateNetwork();
+      });
+
+      document.getElementById('calculate-network-btn').addEventListener('click', () => {
+        if (!this.isFeatureAvailable('calculate-network')) return;
+        this.calculateNetwork();
+      });
+
+      document.getElementById('optimize-network-btn').addEventListener('click', () => {
+        if (!this.isFeatureAvailable('optimize-network')) return;
+        this.optimizeNetwork();
       });
       
       // 关闭按钮事件
       document.querySelectorAll('.close-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
-          e.target.closest('.modal').style.display = 'none';
+          const modal = e.target.closest('.modal');
+          modal.style.display = 'none';
+          
+          // 如果关闭的是编辑弹窗，则显示对应的列表弹窗
+          if (modal.id === 'cooler-modal') {
+            document.getElementById('coolers-list-modal').style.display = 'block';
+          } else if (modal.id === 'flow-modal') {
+            document.getElementById('flows-list-modal').style.display = 'block';
+          } else if (modal.id === 'hot-flow-modal') {
+            document.getElementById('hot-flows-list-modal').style.display = 'block';
+          }
         });
       });
     }
 
-    showCoolerModal(coolerData = null) {
+    // 功能可用性检查
+    isFeatureAvailable(featureId) {
+      // 目前所有预留功能都未实现
+      alert('该功能正在开发中，敬请期待！');
+      return false;
+    }
+
+    // 预留的功能接口
+    generateNetwork() {
+      console.log('Generate network feature will be implemented here');
+    }
+
+    calculateNetwork() {
+      console.log('Calculate network feature will be implemented here');
+    }
+
+    optimizeNetwork() {
+      console.log('Optimize network feature will be implemented here');
+    }
+
+    showCoolerModal(coolerData = null, index = undefined) {
       const modal = document.getElementById('cooler-modal');
       const form = document.getElementById('cooler-form');
+      
+      // 重置表单
+      form.reset();
+      // 设置编辑索引
+      form.dataset.editIndex = index;
       
       if (coolerData) {
         // 编辑现有冷却器
@@ -89,33 +177,51 @@ document.addEventListener('apiReady', () => {
           const input = form.elements[key];
           if (input) input.value = value;
         });
-      } else {
-        // 添加新冷却器
-        form.reset();
       }
       
       modal.style.display = 'block';
     }
 
-    showFlowModal(flowData = null) {
+    showFlowModal(flowData = null, index = undefined) {
       const modal = document.getElementById('flow-modal');
       const form = document.getElementById('flow-form');
       
+      // 重置表单
+      form.reset();
+      // 设置编辑索引
+      form.dataset.editIndex = index;
+      
       if (flowData) {
         // 编辑现有水流股
-        Object.entries(flowData).forEach(([key, value]) => {
-          const input = form.elements[key];
-          if (input) {
-            if (Array.isArray(value)) {
-              input.value = value.join(',');
-            } else {
-              input.value = value;
-            }
-          }
-        });
-      } else {
-        // 添加新水流股
-        form.reset();
+        const { name, sources, path, destinations } = flowData;
+        form.elements.name.value = name;
+        form.elements.sources.value = sources.join(',');
+        form.elements.path.value = path.join(',');
+        form.elements.destinations.value = destinations.join(',');
+      }
+      
+      modal.style.display = 'block';
+    }
+
+    showHotFlowModal(hotFlowData = null, index = undefined) {
+      const modal = document.getElementById('hot-flow-modal');
+      const form = document.getElementById('hot-flow-form');
+      
+      // 重置表单
+      form.reset();
+      // 设置编辑索引
+      form.dataset.editIndex = index;
+      
+      if (hotFlowData) {
+        // 编辑现有热流股
+        const { name, inletTemp, outletTemp, mcp, heatCapacity, flowRate, coolers } = hotFlowData;
+        form.elements.name.value = name;
+        form.elements.inletTemp.value = inletTemp;
+        form.elements.outletTemp.value = outletTemp;
+        form.elements.mcp.value = mcp;
+        form.elements.heatCapacity.value = heatCapacity;
+        form.elements.flowRate.value = flowRate;
+        form.elements.coolers.value = coolers.join(',');
       }
       
       modal.style.display = 'block';
@@ -133,9 +239,18 @@ document.addEventListener('apiReady', () => {
         outTemp: Number(formData.get('outTemp'))
       };
       
-      this.coolers.push(coolerData);
+      const editIndex = event.target.dataset.editIndex;
+      if (editIndex !== undefined) {
+        // 编辑现有冷却器
+        this.coolers[editIndex] = coolerData;
+      } else {
+        // 添加新冷却器
+        this.coolers.push(coolerData);
+      }
+      
       this.updateCoolersTable();
       document.getElementById('cooler-modal').style.display = 'none';
+      document.getElementById('coolers-list-modal').style.display = 'block';
     }
 
     handleFlowSubmit(event) {
@@ -143,14 +258,50 @@ document.addEventListener('apiReady', () => {
       const formData = new FormData(event.target);
       const flowData = {
         name: formData.get('name'),
-        source: formData.get('source'),
+        sources: formData.get('sources').split(',').map(s => s.trim()).filter(Boolean),
         path: formData.get('path').split(',').map(s => s.trim()).filter(Boolean),
-        destinations: formData.get('destinations')
+        destinations: formData.get('destinations').split(',').map(s => s.trim()).filter(Boolean)
       };
       
-      this.flows.push(flowData);
+      const editIndex = event.target.dataset.editIndex;
+      if (editIndex !== undefined) {
+        // 编辑现有水流股
+        this.flows[editIndex] = flowData;
+      } else {
+        // 添加新水流股
+        this.flows.push(flowData);
+      }
+      
       this.updateFlowsTable();
       document.getElementById('flow-modal').style.display = 'none';
+      document.getElementById('flows-list-modal').style.display = 'block';
+    }
+
+    handleHotFlowSubmit(event) {
+      event.preventDefault();
+      const formData = new FormData(event.target);
+      const hotFlowData = {
+        name: formData.get('name'),
+        inletTemp: Number(formData.get('inletTemp')),
+        outletTemp: Number(formData.get('outletTemp')),
+        mcp: Number(formData.get('mcp')),
+        heatCapacity: Number(formData.get('heatCapacity')),
+        flowRate: Number(formData.get('flowRate')),
+        coolers: formData.get('coolers').split(',').map(s => s.trim()).filter(Boolean)
+      };
+      
+      const editIndex = event.target.dataset.editIndex;
+      if (editIndex !== undefined) {
+        // 编辑现有热流股
+        this.hotFlows[editIndex] = hotFlowData;
+      } else {
+        // 添加新热流股
+        this.hotFlows.push(hotFlowData);
+      }
+      
+      this.updateHotFlowsTable();
+      document.getElementById('hot-flow-modal').style.display = 'none';
+      document.getElementById('hot-flows-list-modal').style.display = 'block';
     }
 
     updateCoolersTable() {
@@ -197,7 +348,11 @@ document.addEventListener('apiReady', () => {
             ${this.flows.map((flow, index) => `
               <tr>
                 <td>${flow.name}</td>
-                <td>${flow.source} → ${flow.path.join(' → ')} → ${flow.destinations}</td>
+                <td>
+                  ${flow.sources.join(' + ')} → 
+                  ${flow.path.length ? flow.path.join(' → ') + ' → ' : ''}
+                  ${flow.destinations.join(' | ')}
+                </td>
                 <td>
                   <button onclick="app.editFlow(${index})">编辑</button>
                   <button onclick="app.deleteFlow(${index})">删除</button>
@@ -209,22 +364,75 @@ document.addEventListener('apiReady', () => {
       `;
     }
 
+    updateHotFlowsTable() {
+      const container = document.getElementById('hot-flows-table');
+      container.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>名称</th>
+              <th>入口温度</th>
+              <th>出口温度</th>
+              <th>MCP</th>
+              <th>热容量</th>
+              <th>流速</th>
+              <th>冷却器</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${this.hotFlows.map((flow, index) => `
+              <tr>
+                <td>${flow.name}</td>
+                <td>${flow.inletTemp} ℃</td>
+                <td>${flow.outletTemp} ℃</td>
+                <td>${flow.mcp} kJ/℃·h</td>
+                <td>${flow.heatCapacity} kW</td>
+                <td>${flow.flowRate} kg/h</td>
+                <td>${flow.coolers.join(' → ')}</td>
+                <td>
+                  <button onclick="app.editHotFlow(${index})">编辑</button>
+                  <button onclick="app.deleteHotFlow(${index})">删除</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
     editCooler(index) {
-      this.showCoolerModal(this.coolers[index]);
+      this.showCoolerModal(this.coolers[index], index);
     }
 
     deleteCooler(index) {
-      this.coolers.splice(index, 1);
-      this.updateCoolersTable();
+      if (confirm('确定要删除这个冷却器吗？')) {
+        this.coolers.splice(index, 1);
+        this.updateCoolersTable();
+      }
     }
 
     editFlow(index) {
-      this.showFlowModal(this.flows[index]);
+      this.showFlowModal(this.flows[index], index);
     }
 
     deleteFlow(index) {
-      this.flows.splice(index, 1);
-      this.updateFlowsTable();
+      if (confirm('确定要删除这个水流股吗？')) {
+        this.flows.splice(index, 1);
+        this.updateFlowsTable();
+      }
+    }
+
+    editHotFlow(index) {
+      const hotFlowData = this.hotFlows[index];
+      this.showHotFlowModal(hotFlowData, index);
+    }
+
+    deleteHotFlow(index) {
+      if (confirm('确定要删除这个热流股吗？')) {
+        this.hotFlows.splice(index, 1);
+        this.updateHotFlowsTable();
+      }
     }
 
     generate3DView() {
@@ -248,6 +456,12 @@ document.addEventListener('apiReady', () => {
         console.log('Adding flows:', this.flows);
         this.flows.forEach(flow => {
           this.model3D.addFlow(flow);
+        });
+
+        // 添加所有热流股
+        console.log('Adding hot flows:', this.hotFlows);
+        this.hotFlows.forEach(flow => {
+          this.model3D.addHotFlow(flow);
         });
         
         // 渲染场景

@@ -1,7 +1,7 @@
 {
   "coolers": [
     {
-      "name": "冷却器1",
+      "name": "冷却器0",
       "x": 0,
       "y": 0,
       "z": 0,
@@ -11,6 +11,14 @@
     {
       "name": "冷却器2",
       "x": 3,
+      "y": 3,
+      "z": 0,
+      "inTemp": 37.5,
+      "outTemp": 28.6
+    },
+    {
+      "name": "冷却器1",
+      "x": 6,
       "y": 0,
       "z": 0,
       "inTemp": 37.5,
@@ -18,7 +26,7 @@
     },
     {
       "name": "冷却器3",
-      "x": 0,
+      "x": 6,
       "y": 3,
       "z": 0,
       "inTemp": 28.6,
@@ -26,9 +34,9 @@
     },
     {
       "name": "冷却器4",
-      "x": 3,
+      "x": 9,
       "y": 3,
-      "z": 0,
+      "z": 3,
       "inTemp": 20,
       "outTemp": 55
     }
@@ -36,21 +44,56 @@
   "flows": [
     {
       "name": "水流1",
-      "source": "冷却器1",
-      "path": ["冷却器2"],
-      "destinations": "冷却器3"
+      "sources": ["冷却器0"],
+      "path": ["冷却器1"],
+      "destinations": ["冷却器3"]
     },
     {
       "name": "水流2",
-      "source": "冷却器3",
-      "path": [],
-      "destinations": "冷却器4"
+      "sources": ["冷却器0"],
+      "path": ["冷却器2"],
+      "destinations": ["冷却器3"]
     },
     {
       "name": "水流3",
-      "source": "冷却器4",
-      "path": [],
-      "destinations": "冷却器1"
+      "sources": ["冷却器2", "冷却器1"],
+      "path": ["冷却器3"],
+      "destinations": ["冷却器4"]
+    },
+    {
+      "name": "水流4",
+      "sources": ["冷却器3"],
+      "path": ["冷却器4"],
+      "destinations": ["冷却器0"]
+    }
+  ],
+  "hotFlows": [
+    {
+      "name": "热流股1",
+      "inletTemp": 95.0,
+      "outletTemp": 45.0,
+      "mcp": 2500.0,
+      "heatCapacity": 34.7,
+      "flowRate": 3600.0,
+      "coolers": ["冷却器0", "冷却器1"]
+    },
+    {
+      "name": "热流股2",
+      "inletTemp": 85.0,
+      "outletTemp": 35.0,
+      "mcp": 1800.0,
+      "heatCapacity": 25.0,
+      "flowRate": 2800.0,
+      "coolers": ["冷却器2", "冷却器3"]
+    },
+    {
+      "name": "热流股3",
+      "inletTemp": 75.0,
+      "outletTemp": 30.0,
+      "mcp": 2000.0,
+      "heatCapacity": 28.0,
+      "flowRate": 3200.0,
+      "coolers": ["冷却器4"]
     }
   ]
 }
