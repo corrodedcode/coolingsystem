@@ -13,11 +13,16 @@ Promise.all([
   import('./components/inputForm.mjs').catch(e => {
     console.error('Error importing inputForm.mjs:', e);
     return { CoolingSystemInputForm: null };
+  }),
+  import('./components/HeatExchangeNetwork.js').catch(e => {
+    console.error('Error importing HeatExchangeNetwork.js:', e);
+    return { HeatExchangeNetwork: null };
   })
-]).then(([model3D, inputForm]) => {
+]).then(([model3D, inputForm, network]) => {
   console.log('All modules loaded:', {
     model3D: !!model3D.CoolingSystem3D,
-    inputForm: !!inputForm.CoolingSystemInputForm
+    inputForm: !!inputForm.CoolingSystemInputForm,
+    network: !!network.HeatExchangeNetwork
   });
 
   // 创建构造函数包装器
@@ -46,7 +51,10 @@ Promise.all([
             handleSubmit: (...args) => instance.handleSubmit(...args),
             loadSampleData: (...args) => instance.loadSampleData(...args),
             getData: (...args) => instance.getData(...args),
-            validateData: (...args) => instance.validateData(...args)
+            validateData: (...args) => instance.validateData(...args),
+
+            // 网络图相关方法
+            draw: (...args) => instance.draw(...args)
           };
         } catch (error) {
           console.error('Error creating instance:', error);
@@ -60,6 +68,7 @@ Promise.all([
   contextBridge.exposeInMainWorld('api', {
     CoolingSystem3D: createClassWrapper(model3D.CoolingSystem3D),
     CoolingSystemInputForm: createClassWrapper(inputForm.CoolingSystemInputForm),
+    HeatExchangeNetwork: createClassWrapper(network.HeatExchangeNetwork),
     // 暴露 IPC 通信方法
     send: (channel, data) => ipcRenderer.send(channel, data),
     on: (channel, func) => ipcRenderer.on(channel, (event, ...args) => func(...args)),

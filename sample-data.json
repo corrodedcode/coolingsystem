@@ -97,7 +97,7 @@
       "destinations": ["冷却塔"]
     },
     {
-      "name": "水流4",
+      "name": "水流6",
       "sources": ["冷却器7"],
       "path": [],
       "destinations": ["冷却塔"]
@@ -130,6 +130,24 @@
       "heatCapacity": 28.0,
       "flowRate": 3200.0,
       "coolers": ["冷却器4"]
+    },
+    {
+      "name": "热流股4",
+      "inletTemp": 125.0,
+      "outletTemp": 30.0,
+      "mcp": 15000.0,
+      "heatCapacity": 28.0,
+      "flowRate": 3200.0,
+      "coolers": ["冷却器5"]
+    },
+    {
+      "name": "热流股5",
+      "inletTemp": 105.0,
+      "outletTemp": 30.0,
+      "mcp": 2000.0,
+      "heatCapacity": 28.0,
+      "flowRate": 3200.0,
+      "coolers": ["冷却器6","冷却器7"]
     }
   ]
 }

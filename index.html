@@ -165,13 +165,16 @@
   
   <main>
     <div class="sidebar">
-      <button id="generate-btn">生成三维视图</button>
-      <button id="generate-network-btn" class="disabled" title="功能开发中">生成换热网络</button>
+      <div class="button-container">
+        <button id="generateButton">生成三维视图</button>
+        <button id="generateNetworkButton">生成换热网络</button>
+      </div>
       <button id="calculate-network-btn" class="disabled" title="功能开发中">计算网络</button>
       <button id="optimize-network-btn" class="disabled" title="功能开发中">优化网络</button>
     </div>
     <section>
       <div id="scene-container"></div>
+      <canvas id="networkCanvas" style="display: none; border: 1px solid #ccc; margin: 20px;"></canvas>
     </section>
   </main>
 
