@@ -162,9 +162,9 @@ export class HeatExchangeNetwork {
         this.drawArrow(endX, y, 'right', this.styles.hotFlow);
 
         // 绘制温度标签
-        this.drawText(`${inletTemp}°C`, startX - 10, y, { align: 'right' });
+        this.drawText(`${inletTemp}°C`, startX - 25, y, { align: 'right' });
         this.drawText(`${outletTemp}°C`, endX + 10, y, { align: 'left' });
-        this.drawText(name, startX - 40, y, { align: 'right' });
+        this.drawText(name, startX - 70, y, { align: 'right' });
 
         return { y, coolers };
     }
@@ -739,8 +739,8 @@ export class HeatExchangeNetwork {
             this.ctx.lineTo(flowData.endPoint.x, flowData.endPoint.y);
             this.ctx.stroke();
 
-            // 绘制流股名称
-            this.drawText(flowName, flowData.startPoint.x - 10, flowData.startPoint.y, { align: 'right' });
+            // 绘制流股名称，左移并上移，确保文字超过冷却器1/2高度
+            this.drawText(flowName, flowData.startPoint.x - 10, flowData.startPoint.y - 15, { align: 'right' });
 
             // 绘制箭头
             this.drawArrow(flowData.endPoint.x, flowData.endPoint.y, 'left', this.styles.coolFlow);
@@ -762,20 +762,21 @@ export class HeatExchangeNetwork {
         const towerX = this.canvas.width/2;
         const towerY = this.canvas.height - this.margin.bottom;
 
-        // 绘制从冷却塔到画布右端的水平线
+        // 绘制从冷却塔到画布右端的水平线,从偏移10个单位开始绘制线
         this.ctx.beginPath();
-        this.ctx.moveTo(towerX + this.styles.coolingTower.width/2, towerY - this.styles.coolingTower.height/2);
-        this.ctx.lineTo(this.canvas.width - this.margin.right, towerY - this.styles.coolingTower.height/2);
+        this.ctx.moveTo(towerX + this.styles.coolingTower.width/2 -4, towerY - this.styles.coolingTower.height/2 + 10);
+        this.ctx.lineTo(this.canvas.width - this.margin.right, towerY - this.styles.coolingTower.height/2 + 10);
         this.ctx.stroke();
 
         // 绘制从画布右端到冷却水流源头的垂直线
         this.ctx.beginPath();
-        this.ctx.moveTo(this.canvas.width - this.margin.right, towerY - this.styles.coolingTower.height/2);
+        this.ctx.moveTo(this.canvas.width - this.margin.right, towerY - this.styles.coolingTower.height/2 + 10);
         this.ctx.lineTo(this.canvas.width - this.margin.right, coordinates.sourcePoint.y);
         this.ctx.stroke();
 
-        // 绘制箭头
-        this.drawArrow(this.canvas.width - this.margin.right, coordinates.sourcePoint.y, 'left', this.styles.coolFlow);
+        // 从冷却塔出来一小段距离绘制箭头
+        this.drawArrow(this.canvas.width - this.margin.right -5, coordinates.sourcePoint.y, 'left', this.styles.coolFlow);
+        this.drawArrow(towerX + this.styles.coolingTower.width/2 +20, towerY - this.styles.coolingTower.height/2 + 10, 'right', this.styles.coolFlow);
     }
 
     drawSinkToCoolingTower(coordinates) {
@@ -800,7 +801,7 @@ export class HeatExchangeNetwork {
         this.ctx.stroke();
 
         // 绘制箭头
-        this.drawArrow(towerX - this.styles.coolingTower.width/2, towerY, 'up', this.styles.coolFlow);
+        this.drawArrow(towerX - this.styles.coolingTower.width/2, towerY, 'right', this.styles.coolFlow);
     }
 
     drawFlowConnections(coordinates) {
